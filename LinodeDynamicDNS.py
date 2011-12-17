@@ -36,6 +36,31 @@ except:
 import re
 import urllib2
 
+
+def get_ip():
+    # This is only needed because we want to be nice and not hammer Linode
+    # If we weren't nice, we could just set TARGET='[remote_addr]' 
+    # in the DNS resource update.
+    
+    needle = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+    ip = None
+
+    try:
+        haystack = urllib2.urlopen(CHECK_URL).read()
+    except:
+        print("Unable to open check URL.")
+        exit(-1)
+
+    match = re.search(needle, haystack)
+    if match is not None:
+        ip = match.group(0)
+    else:
+        print("Unable to get IP from check URL.")
+        exit(-1)
+
+    return ip  
+    
+    
 def main():
     # Find our domain record
     domain_id = None
@@ -43,7 +68,7 @@ def main():
     domain_name = None  # Example: example.com
     host_name = None    # Example: home (from home.example.com)
     
-    #ip = get_ip()
+    ip = get_ip()
 
     # Login and test the connection
     try:
@@ -69,8 +94,10 @@ def main():
     for resource in linode.domain_resource_list(domainid=domain_id):
         if resource['NAME'] == host_name:
             resource_id = resource['RESOURCEID']
+            resource_ip = resource['TARGET']
     
-    if resource_id is None: # we need to create the hostname
+    if resource_id is None: 
+        # We need to create the hostname
         try:
             resource_id = linode.domain_resource_create(domainid=domain_id, 
                 name=host_name, type='A', target="[remote_addr]")['ResourceID']
@@ -78,20 +105,24 @@ def main():
             print("%s doesn't exist and I was unable to create it." % HOSTNAME)
             return -2
         
-        for res in linode.domain_resource_list(domainid=domain_id):
-            if res['RESOURCEID'] == resource_id:
-                ip = res['TARGET']
-        
         print("Successfully created %s with the IP %s" % (HOSTNAME, ip))
         return 1
+        
 
-    # Is our record already up to date?
+    # Update the record if it's wrong
+    if resource_ip != ip:
+        try:
+            linode.domain_resource_update(domainid=domain_id, 
+                resourceid=resource_id, name=host_name, target=ip)
+        except:
+            print("%s exists but I was unable to update it." % HOSTNAME)
+            return -2
 
-    return 0
-
-    # Update the record
-    
-    return 1
+        print("Successfully updated %s with the IP %s" % (HOSTNAME, ip))
+        return 1
+    else:   
+        return 0    # Quit silently, useful for cron jobs
+        
     
 
 if __name__ == "__main__":
