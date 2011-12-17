@@ -36,56 +36,63 @@ except:
 import re
 import urllib2
 
-def get_ip():
-    needle = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-    ip = None
-
-    try:
-        haystack = urllib2.urlopen(CHECK_URL).read()
-    except:
-        print("Unable to open check URL.")
-        exit(-1)
-
-    match = re.search(needle, haystack)
-    if match is not None:
-        ip = match.group(0)
-    else:
-        print("Unable to get IP from check URL.")
-        exit(-1)
-
-    return ip    
-
 def main():
     # Find our domain record
     domain_id = None
-    domain_name = None
     resource_id = None
-
-    linode = api.Api(API_KEY)
-    for domain in linode.domain_list():
-        if domain['DOMAIN'] in hostname:
-            domain_id = domain['DOMAINID']
-            domain_name = domain['DOMAIN']
+    domain_name = None  # Example: example.com
+    host_name = None    # Example: home (from home.example.com)
     
-    if domain_id is None:
-        print("Unable to find the domain in your account. Is your API key correct?")
+    #ip = get_ip()
+
+    # Login and test the connection
+    try:
+        linode = api.Api(API_KEY)
+        linode.test_echo()
+    except:
+        print("Unable to login to the Linode API. Is your API key correct?")
         return -2
 
-    for resource in linode.domain_resource_list(domainid=domain_id):
-        print(resource)
-
-    return 0
+    # Find the domain name and ID
+    for domain in linode.domain_list():
+        if domain['DOMAIN'] in HOSTNAME:
+            domain_id = domain['DOMAINID']
+            domain_name = domain['DOMAIN']
+            host_name = HOSTNAME.replace("." + domain_name, '')
     
-    ip = get_ip()
+    if domain_id is None:
+        print("Unable to find the domain in your account.")
+        return -2
+
+        
+    # Find the domain resource and ID
+    for resource in linode.domain_resource_list(domainid=domain_id):
+        if resource['NAME'] == host_name:
+            resource_id = resource['RESOURCEID']
+    
+    if resource_id is None: # we need to create the hostname
+        try:
+            resource_id = linode.domain_resource_create(domainid=domain_id, 
+                name=host_name, type='A', target="[remote_addr]")['ResourceID']
+        except:
+            print("%s doesn't exist and I was unable to create it." % HOSTNAME)
+            return -2
+        
+        for res in linode.domain_resource_list(domainid=domain_id):
+            if res['RESOURCEID'] == resource_id:
+                ip = res['TARGET']
+        
+        print("Successfully created %s with the IP %s" % (HOSTNAME, ip))
+        return 1
 
     # Is our record already up to date?
 
     return 0
 
     # Update the record
+    
     return 1
     
 
 if __name__ == "__main__":
     exit(main())
-
