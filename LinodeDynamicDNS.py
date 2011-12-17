@@ -7,6 +7,9 @@
 # you to find any pesky ID numbers. Plus, this uses the linode-python library,
 # which can be found here: https://github.com/tjfontaine/linode-python/
 
+# Since this script uses urllib2, it requires Python 2.x.
+# I will create a version of this which will run with Python 3.x
+
 
 # You better damn well edit these values below. Otherwise, this will all
 # come to a firey crash.
@@ -22,7 +25,8 @@ HOSTNAME = "home.yourdomain.com"
 CHECK_URL = "http://checkip.dyndns.org"
 
 # Comment this next line out.
-exit("Hey, you! You didn't change any settings. How do you expect this script to work?")
+exit("Hey, you! You didn't change any settings in the script. How do you expect it to work?")
+
 
 
 #######################################################################
