@@ -7,8 +7,7 @@
 # you to find any pesky ID numbers. Plus, this uses the linode-python library,
 # which can be found here: https://github.com/tjfontaine/linode-python/
 
-# Since this script uses urllib2, it requires Python 2.x.
-# I will create a version of this which will run with Python 3.x
+# This script requires Python 2.x since linode-python requires it.
 
 
 # You better damn well edit these values below. Otherwise, this will all
