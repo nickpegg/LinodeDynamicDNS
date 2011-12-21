@@ -19,7 +19,7 @@ API_KEY = "1234567890OmgI<3Pwnies."
 # Hostname to update.
 HOSTNAME = "home.yourdomain.com"
 
-# URL which outputs your current IP. If the resultant HTML contain an IP, 
+# URL which outputs your current IP. If the resultant HTML contains an IP, 
 # we'll use that one. 
 CHECK_URL = "http://checkip.dyndns.org"
 
