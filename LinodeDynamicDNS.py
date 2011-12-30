@@ -103,7 +103,7 @@ def main():
         # We need to create the hostname
         try:
             resource_id = linode.domain_resource_create(domainid=domain_id, 
-                name=host_name, type='A', target="[remote_addr]")['ResourceID']
+                name=host_name, type='A', target=ip)['ResourceID']
         except:
             print("%s doesn't exist and I was unable to create it." % HOSTNAME)
             return -2
